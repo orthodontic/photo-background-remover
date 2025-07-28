@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link href="main.css" rel="stylesheet" />
+    <title>Portrait Matting</title>
+  </head>
+  <body>
+    <input type="file" id="fileInput" hidden />
+    <div id="fileDrop">Drop photo here.</div>
+    <div id="loader" style="display: none">Loading...</div>
+    <div id="error"></div>
+    <canvas id="outputCanvas" style="display: none"></canvas>
+    <a id="downloadLink" style="display: none">Download as JPG</a>
+    <script type="module" src="main.js"></script>
+  </body>
+</html>

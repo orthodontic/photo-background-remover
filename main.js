@@ -1,9 +1,4 @@
-import {
-  env,
-  AutoModel,
-  RawImage,
-  AutoProcessor,
-} from "./lib/transformers.min.js";
+import { env, AutoModel, RawImage, AutoProcessor } from "./transformers.min.js";
 
 env.allowRemoteModels = false;
 env.allowLocalModels = true;

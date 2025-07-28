@@ -7,8 +7,8 @@ import {
 
 env.allowRemoteModels = false;
 env.allowLocalModels = true;
-env.localModelPath = "/models/";
-env.backends.onnx.wasm.wasmPaths = "/lib/wasm/";
+env.localModelPath = "./models/";
+env.backends.onnx.wasm.wasmPaths = "./wasm/";
 
 let model, processor;
 

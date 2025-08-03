@@ -7,16 +7,27 @@ env.backends.onnx.wasm.wasmPaths = "./wasm/";
 
 let model, processor;
 
-(async () => {
+async function loadModnet() {
+  if (model && processor) return;
   model = await AutoModel.from_pretrained("modnet");
   processor = await AutoProcessor.from_pretrained("modnet");
-})();
+}
 
+window.addEventListener("DOMContentLoaded", () => {
+  setUIState("init");
+  loadModnet();
+});
+
+window.addEventListener("beforeunload", () => {
+  model?.dispose?.();
+  processor?.dispose?.();
+});
+
+let filename;
 async function handleFile(file) {
   setUIState("loading");
   try {
     const image = await RawImage.read(file);
-
     const { pixel_values } = await processor(image);
     const { output } = await model({ input: pixel_values });
 
@@ -24,36 +35,21 @@ async function handleFile(file) {
       output[0].mul(255).to("uint8")
     ).resize(image.width, image.height);
 
-    const imageCanvas = image.toCanvas();
-    const imageContext = imageCanvas.getContext("2d");
-    const imageData = imageContext.getImageData(
-      0,
-      0,
-      image.width,
-      image.height
-    );
+    image.putAlpha(mask);
 
-    const maskCanvas = mask.toCanvas();
-    const maskCtx = maskCanvas.getContext("2d");
-    const maskData = maskCtx.getImageData(0, 0, image.width, image.height);
+    const imageCanvas = document.getElementById("imageCanvas");
+    imageCanvas.width = image.width;
+    imageCanvas.height = image.height;
+    imageCanvas.getContext("2d").drawImage(image.toCanvas(), 0, 0);
+    const maskCanvas = document.getElementById("maskCanvas");
+    maskCanvas.width = image.width;
+    maskCanvas.height = image.height;
+    maskCanvas.getContext("2d").drawImage(mask.toCanvas(), 0, 0);
 
-    for (let i = 0; i < imageData.data.length; i += 4) {
-      imageData.data[i + 3] = maskData.data[i];
-    }
-    imageContext.putImageData(imageData, 0, 0);
+    filename = file.name.replace(/\.[^/.]+$/, "");
 
-    const outputCanvas = document.getElementById("outputCanvas");
-    outputCanvas.width = image.width;
-    outputCanvas.height = image.height;
-    const outputCtx = outputCanvas.getContext("2d");
-    outputCtx.fillStyle = "#3ccef6";
-    outputCtx.fillRect(0, 0, image.width, image.height);
-    outputCtx.drawImage(imageCanvas, 0, 0);
-    console.log(file);
+    renderImageWithBackground(document.getElementById("color_input").value);
 
-    const downloadLink = document.getElementById("downloadLink");
-    downloadLink.download = file.name;
-    downloadLink.href = outputCanvas.toDataURL("image/jpeg", 0.92);
     setUIState("done");
   } catch (e) {
     setUIState("failed", e);
@@ -66,7 +62,7 @@ fileInput.addEventListener("change", (e) => {
   handleFile(e.target.files[0]);
 });
 
-const fileDrop = document.getElementById("fileDrop");
+const fileDrop = document.getElementById("image");
 fileDrop.addEventListener("click", () => fileInput.click());
 fileDrop.addEventListener("dragover", (e) => {
   e.preventDefault();
@@ -85,47 +81,86 @@ fileDrop.addEventListener("drop", (e) => {
   }
 });
 
+// Setup rendering tools
+function renderImageWithBackground(background) {
+  const imageCanvas = document.getElementById("imageCanvas");
+  var tmpCanvas = document.createElement("canvas");
+  tmpCanvas.width = imageCanvas.width;
+  tmpCanvas.height = imageCanvas.height;
+  const tmpCtx = tmpCanvas.getContext("2d");
+  tmpCtx.fillStyle = background;
+  tmpCtx.fillRect(0, 0, imageCanvas.width, imageCanvas.height);
+  tmpCtx.drawImage(imageCanvas, 0, 0);
+
+  const jpegSrc = tmpCanvas.toDataURL("image/jpeg", 0.92);
+
+  document.getElementById("image").src = jpegSrc;
+
+  const downloadLink = document.getElementById("downloadLink");
+  downloadLink.download = `${filename}_${background}.jpg`; // filename is global
+  downloadLink.href = jpegSrc;
+}
+function renderImageTransparent() {
+  const imageCanvas = document.getElementById("imageCanvas");
+  const pngSrc = imageCanvas.toDataURL("image/png");
+  document.getElementById("image").src = pngSrc;
+
+  const downloadLink = document.getElementById("downloadLink");
+  downloadLink.download = `${filename}_transparent.png`; // filename is global
+  downloadLink.href = pngSrc;
+}
+function renderMask() {
+  const maskCanvas = document.getElementById("maskCanvas");
+  const pngSrc = maskCanvas.toDataURL("image/png");
+  document.getElementById("image").src = pngSrc;
+
+  const downloadLink = document.getElementById("downloadLink");
+  downloadLink.download = `${filename}_mask.png`; // filename is global
+  downloadLink.href = pngSrc;
+}
+
+const colorInput = document.getElementById("color_input");
+colorInput.addEventListener("change", colorChange);
+colorInput.addEventListener("click", colorChange);
+function colorChange(e) {
+  document.getElementById("color_selected").style.backgroundColor =
+    e.target.value;
+  renderImageWithBackground(e.target.value);
+}
+
+const transparentBtn = document.getElementById("transparent");
+transparentBtn.addEventListener("click", renderImageTransparent);
+
+const maskBtn = document.getElementById("mask");
+maskBtn.addEventListener("click", renderMask);
+
 // UI States
 function setUIState(state, msg = null) {
   const show = (el) => (el.style.display = "");
   const hide = (el) => (el.style.display = "none");
 
-  const fileDrop = document.getElementById("fileDrop");
-  const loader = document.getElementById("loader");
-  const error = document.getElementById("error");
-  const outputCanvas = document.getElementById("outputCanvas");
-  const downloadLink = document.getElementById("downloadLink");
+  const status = document.getElementById("status");
+  const tools = document.getElementById("tools");
 
   if (state === "init") {
-    show(fileDrop);
-    hide(loader);
-    hide(error);
-    hide(outputCanvas);
-    hide(downloadLink);
+    hide(status);
+    hide(tools);
   }
 
   if (state === "loading") {
-    show(fileDrop);
-    show(loader);
-    hide(error);
-    hide(outputCanvas);
-    hide(downloadLink);
+    status.textContent = "Loading...";
+    show(status);
+    hide(tools);
   }
 
   if (state === "failed") {
-    show(fileDrop);
-    hide(loader);
-    show(error);
-    error.textContent = msg || "Something went wrong.";
-    hide(outputCanvas);
-    hide(downloadLink);
+    status.textContent = msg || "Something went wrong.";
+    show(status);
+    hide(tools);
   }
 
   if (state === "done") {
-    show(fileDrop);
-    hide(loader);
-    hide(error);
-    show(outputCanvas);
-    show(downloadLink);
+    hide(status);
+    show(tools);
   }
 }

@@ -7,12 +7,36 @@
     <title>Portrait Matting</title>
   </head>
   <body>
+    <img id="image" src="placeholder.svg" />
     <input type="file" id="fileInput" hidden />
-    <div id="fileDrop">Drop photo here.</div>
-    <div id="loader" style="display: none">Loading...</div>
-    <div id="error"></div>
-    <canvas id="outputCanvas" style="display: none"></canvas>
-    <a id="downloadLink" style="display: none">Download as JPG</a>
+    <div id="status"></div>
+    <div id="tools">
+      <div class="left">
+        <div id="color">
+          <div id="color_selected" style="background-color: #3ccef6"></div>
+          <input
+            id="color_input"
+            type="color"
+            value="#3ccef6"
+            list="presetColors"
+          />
+          <datalist id="presetColors">
+            <option>#000000</option>
+            <option>#ffffff</option>
+            <option>#3ccef6</option>
+          </datalist>
+        </div>
+        <div id="transparent"></div>
+        <div id="mask"></div>
+      </div>
+      <div class="right">
+        <a id="downloadLink">
+          <img src="download.svg" />
+        </a>
+      </div>
+    </div>
+    <canvas id="imageCanvas" style="display: none"></canvas>
+    <canvas id="maskCanvas" style="display: none"></canvas>
     <script type="module" src="main.js"></script>
   </body>
 </html>

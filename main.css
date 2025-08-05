@@ -1,17 +1,37 @@
+:root {
+  --bg-color: #fff;
+  --fg-color: #888;
+  --secondary-color: #ccc;
+  --contrast-color: #000;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-color: #000;
+    --fg-color: #888;
+    --secondary-color: #333;
+    --contrast-color: #fff;
+  }
+}
+
+html {
+  background-color: var(--bg-color);
+}
+
 body {
   display: flex;
   flex-direction: column;
   align-items: center;
   font-family: sans-serif;
-  color: #777;
+  color: var(--fg-color);
 }
 
 #image {
   width: 300px;
   height: auto;
   border-radius: 5px;
-  --color-1: #777;
-  --color-2: #ccc;
+  --color-1: var(--fg-color);
+  --color-2: var(--secondary-color);
   --size: 4px;
 
   background-image: conic-gradient(
@@ -26,7 +46,7 @@ body {
 }
 #image[src="placeholder.svg"] {
   cursor: pointer;
-  border: 1px dashed #888;
+  border: 1px dashed var(--fg-color);
   background: transparent;
 }
 #image[src="placeholder.svg"].dragover {
@@ -64,8 +84,8 @@ body {
 }
 
 #transparent {
-  --color-1: #777;
-  --color-2: #ccc;
+  --color-1: var(--fg-color);
+  --color-2: var(--secondary-color);
   --size: 4px;
 
   background-image: conic-gradient(
@@ -86,7 +106,7 @@ body {
     #fff 62.5%,
     #000 62.5%
   );
-  border: 1px solid #888;
+  border: 1px solid var(--contrast-color);
   box-sizing: border-box;
 }
 
@@ -103,7 +123,7 @@ body {
   right: 2px;
   border-radius: 50%;
   background-color: #ccc;
-  border: 1.5px solid #fff;
+  border: 1.5px solid var(--bg-color);
 }
 #color input[type="color"] {
   position: absolute;
